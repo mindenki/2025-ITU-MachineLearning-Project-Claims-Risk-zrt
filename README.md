@@ -6,46 +6,74 @@ The project investigates claims risk modeling in automobile insurance using vari
 - [Project Guidelines](docs/ML_Project_Proposal_2025.pdf) – original project description from ITU.
 
 
+## Project Workflow
+1. **Preprocessing** – Data cleaning, handling missing values, encoding categorical features, scaling numeric variables.  
+2. **Exploratory Data Analysis (EDA)** – Visualize distributions, detect outliers, study correlations, perform PCA and clustering.  
+3. **Feature Engineering** – Create, transform, or select features to improve model performance.  
+4. **Model Implementation (from scratch)** – Implement Decision Tree and Feed-Forward Neural Network manually using NumPy/SciPy.  
+5. **Reference Models** – Use scikit-learn or other libraries to verify correctness and compare performance.  
+6. **Model 3 (custom)** – Implement an additional method of your choice (e.g., ensemble, regression, or another ML algorithm).  
+7. **Evaluation & Comparison** – Compare models using MAE, RMSE, and Poisson deviance; visualize results.  
+8. **Report Writing** – Summarize methods, results, interpretations, and conclusions in the final report.
+
+
 ## Project Structure
 
 The repository could be organized as:
 
-~~~
-ML_Insurance_Project/
+2025-ITU-MachineLearning-Project-Claims-Risk-zrt/
 │
 ├── data/
-│   ├── raw/                  # Original CSV files (immutable)
+│   ├── raw/
 │   │   ├── claims_train.csv
-│   │   └── claims_test.csv
-│   └── processed/            # Cleaned and preprocessed datasets
+│   │   ├── claims_test.csv
+│   │   └── README.md           # Describe dataset source, size, and columns
+│   ├── processed/
+│   │   └── cleaned_data.csv
+│   └── external/               # (if any additional data sources used)
 │
-├── src/                      # Core Python modules (reusable)
-│   ├── __init__.py
-│   ├── preprocessing.py      # Data cleaning and feature engineering
-│   ├── metrics.py            # Evaluation metrics (RMSE, MAE, etc.)
-│   ├── utils.py              # Helper functions (plotting, saving results)
-│   └── models/
-│       ├── __init__.py
-│       ├── decision_tree.py  # Decision Tree from scratch + library wrapper
-│       ├── neural_network.py # Feed-Forward Neural Network from scratch + library wrapper
-│       └── other_models.py   # Additional models (Random Forest, XGBoost, etc.)
+├── notebooks/
+│   ├── 00_preprocessing.ipynb 
+│   ├── 01_EDA.ipynb
+│   ├── 02_feature_engineering.ipynb
+│   ├── 03_models_scratch.ipynb # Implementations of M1 & M2 (from scratch)
+│   ├── 04_models_reference.ipynb # Using libraries (e.g., sklearn, keras)
+│   ├── 05_model3_experiment.ipynb # M3 (custom / advanced method)
+│   └── 06_results_analysis.ipynb  # Comparison and metrics
 │
-├── experiments/              # Scripts to reproduce experiments
-│   ├── run_eda.py            # Exploratory Data Analysis and visualizations
-│   ├── run_pca_clustering.py # PCA & clustering analysis
-│   ├── run_models.py         # Train & evaluate all models
-│   └── hyperparameter_search.py # Optional hyperparameter tuning scripts
+├── src/
+│   ├── data/
+│   │   ├── load_data.py
+│   │   ├── preprocess.py
+│   │   └── utils.py
+│   ├── models/
+│   │   ├── decision_tree_scratch.py
+│   │   ├── neural_network_scratch.py
+│   │   ├── model3.py
+│   │   └── evaluation.py
+│   └── visualization/
+│       ├── pca_plot.py
+│       ├── clustering_plot.py
+│       └── eda_charts.py
 │
-├── results/                  # Output of experiments
-│   ├── figures/              # Plots and visualizations
-│   └── metrics/              # CSV/JSON files with evaluation scores
+├── reports/
+│   ├── ML_Project_Report.pdf   # final 10-page submission
+│   └── figures/
+│       ├── pca_plot.png
+│       ├── clustering_map.png
+│       └── model_results.png
 │
-├── report/
-│   └── ML_Project_Report.pdf # Final report (≤10 pages)
+├── docs/
+│   └──ML_Project_Proposal_2025.pdf # project guidelines
 │
-├── requirements.txt          # Python dependencies
-├── README.md                 # Project overview and instructions
-└── .gitignore                # Ignore unnecessary files (e.g., __pycache__, .ipynb_checkpoints)
-~~~
+├── tests/
+│   ├── test_decision_tree.py
+│   ├── test_neural_net.py
+│   └── test_utils.py
+│
+├── requirements.txt
+├── environment.yml             # optional: for conda reproducibility
+├── .gitignore
+├── README.md                   # summary, structure, how to run
+└── LICENSE                     # optional if you open source it
 
----
