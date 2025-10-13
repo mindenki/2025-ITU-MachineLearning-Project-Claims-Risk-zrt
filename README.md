@@ -7,8 +7,7 @@ The project investigates claims risk modeling in automobile insurance using vari
 
 
 ## Project Workflow
-1. **Preprocessing** – Data cleaning, handling missing values, encoding categorical features, scaling numeric variables.  
-2. **Exploratory Data Analysis (EDA)** – Visualize distributions, detect outliers, study correlations, perform PCA and clustering.  
+1. **Preprocessing** - 2. **Exploratory Data Analysis (EDA)**  – Data cleaning, handling missing values, encoding categorical features, scaling numeric variables.  – Visualize distributions, detect outliers, study correlations, perform PCA and clustering.  
 3. **Feature Engineering** – Create, transform, or select features to improve model performance.  
 4. **Model Implementation (from scratch)** – Implement Decision Tree and Feed-Forward Neural Network manually using NumPy/SciPy.  
 5. **Reference Models** – Use scikit-learn or other libraries to verify correctness and compare performance.  
@@ -33,8 +32,7 @@ The repository could be organized as:
 │   └── external/               # (if any additional data sources used)
 │
 ├── notebooks/
-│   ├── 00_preprocessing.ipynb 
-│   ├── 01_EDA.ipynb
+│   ├── 01_Preprocessing_EDA.ipynb
 │   ├── 02_feature_engineering.ipynb
 │   ├── 03_models_scratch.ipynb # Implementations of M1 & M2 (from scratch)
 │   ├── 04_models_reference.ipynb # Using libraries (e.g., sklearn, keras)
