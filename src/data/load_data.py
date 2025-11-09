@@ -1,12 +1,15 @@
 import pandas as pd 
 import os
+from pathlib import Path
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-DATA_DIR = os.path.join(ROOT_DIR, "data")
+ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT / "data"
+RAW_DIR = DATA_DIR / "raw"
+PROC_DIR = DATA_DIR / "processed"
 
 
 
-def load_data(data_dir: str="../data", raw: bool=True) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_data(raw: bool=True) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Loads the raw data from the data directory.
     Parameters:
@@ -23,11 +26,11 @@ def load_data(data_dir: str="../data", raw: bool=True) -> tuple[pd.DataFrame, pd
         The test data
     """
     if raw:
-        train_path = os.path.join(data_dir, "raw", "claims_raw_train.csv")
-        test_path = os.path.join(data_dir, "raw", "claims_raw_test.csv")
+        train_path = RAW_DIR / "claims_raw_train.csv"
+        test_path  = RAW_DIR / "claims_raw_test.csv"
     else:
-        train_path = os.path.join(data_dir, "processed", "claims_processed_train.csv")
-        test_path = os.path.join(data_dir, "processed", "claims_processed_test.csv")
+        train_path = PROC_DIR / "claims_processed_train.csv"
+        test_path = PROC_DIR / "claims_processed_train.csv"
     if not os.path.exists(train_path):
         raise FileNotFoundError(f"Training data not found at {train_path}")
     if not os.path.exists(test_path):
@@ -37,7 +40,7 @@ def load_data(data_dir: str="../data", raw: bool=True) -> tuple[pd.DataFrame, pd
     return train_df, test_df
 
 if  __name__ == "__main__":
-    train_df, test_df = load_data(raw=True, data_dir=DATA_DIR)
+    train_df, test_df = load_data(raw=True)
     print("Raw Data")
     print(train_df.head())
     
