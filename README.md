@@ -1,21 +1,21 @@
 # 2025-ITU-MachineLearning-Project-Claims-Risk-zrt
-
-This repository contains the Machine Learning exam project for the BSc Data Science program (Fall 2025).
+This repository contains the Machine Learning exam project for the BSc Data Science program (Fall 2025).  
 The project investigates claims risk modeling in automobile insurance using various machine learning methods.
-
 ## Documentation
 
 - [Project Guidelines](docs/ML_Project_Proposal_2025.pdf) – original project description from ITU.
 
-## Project Workflow
 
-1. **Preprocessing** - 2. **Exploratory Data Analysis (EDA)**  – Data cleaning, handling missing values, encoding categorical features, scaling numeric variables.  – Visualize distributions, detect outliers, study correlations, perform PCA and clustering.
-2. **Feature Engineering** – Create, transform, or select features to improve model performance.
-3. **Model Implementation (from scratch)** – Implement Decision Tree and Feed-Forward Neural Network manually using NumPy/SciPy.
-4. **Reference Models** – Use scikit-learn or other libraries to verify correctness and compare performance.
-5. **Model 3 (custom)** – Implement an additional method of your choice (e.g., ensemble, regression, or another ML algorithm).
-6. **Evaluation & Comparison** – Compare models using MAE, RMSE, and Poisson deviance; visualize results.
-7. **Report Writing** – Summarize methods, results, interpretations, and conclusions in the final report.
+## Project Workflow
+1. **Data Cleaning/Exploratory Data Analysis (EDA)**  – Data cleaning, handling missing values.– Visualize distributions, detect outliers, study correlations, 
+2. **PCA and clustering**
+3. **Preprocessing/Feature Engineering** –Eencoding categorical features, scaling numeric variables. Create, transform, or select features to improve model performance.  
+4. **Model Implementation (from scratch)** – Implement Decision Tree and Feed-Forward Neural Network manually using NumPy/SciPy.  
+5. **Reference Models** – Use scikit-learn or other libraries to verify correctness and compare performance.  
+6. **Model 3 (custom)** – Implement an additional method of your choice (e.g., ensemble, regression, or another ML algorithm).  
+7. **Evaluation & Comparison** – Compare models using MAE, RMSE, and Poisson deviance; visualize results.  
+8. **Report Writing** – Summarize methods, results, interpretations, and conclusions in the final report.
+
 
 ## Project Structure
 
@@ -29,8 +29,7 @@ The repository could be organized as:
 │   │   ├── claims_test.csv
 │   │   └── README.md           # Describe dataset source, size, and columns
 │   ├── processed/
-│   │   └── cleaned_data_train.csv
-│   │   └── cleaned_data_test.csv
+│   │   └── cleaned_data.csv
 │   └── external/               # (if any additional data sources used)
 │
 ├── notebooks/
@@ -76,3 +75,4 @@ The repository could be organized as:
 ├── .gitignore
 ├── README.md                   # summary, structure, how to run
 └── LICENSE                     # optional if you open source it
+

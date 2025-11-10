@@ -25,3 +25,11 @@ The primary objective is to predict the expected number of claims per policyhold
    RMSE seems like a good choice as it penalizes large mistakes.
 
 ### 5. Assumptions
+
+
+
+
+### Some papers
+- https://mjs.um.edu.my/index.php/MJS/article/view/28583?utm_source=chatgpt.com
+- https://www.mdpi.com/2227-9091/11/12/213?utm_source=chatgpt.com
+- https://econpapers.repec.org/article/vrsaicuec/v_3a62_3ay_3a2015_3ai_3a2_3ap_3a151-168_3an_3a2.htm?utm_source=chatgpt.com
