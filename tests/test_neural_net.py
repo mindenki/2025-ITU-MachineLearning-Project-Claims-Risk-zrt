@@ -4,11 +4,43 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
 import torch
+from pathlib import Path
 
 from sklearn.preprocessing import StandardScaler
 from src.data.load_data import load_data
 from src.data.preprocess import preprocess, PCA
 from src.models.MLP_torch import MLP, Dataset
+from torch.utils.tensorboard import SummaryWriter
+
+@torch.no_grad()
+def evaluate(model, test_ds, y_scaler, batch_size=256, device="cpu"):
+    model.eval().to(device)
+    loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, shuffle=False)
+
+    all_y_std, all_p_std = [], []
+    for X, y_std in loader:
+        X = X.float().to(device)
+        y_std = y_std.float().view(-1, 1).to(device)
+        p_std = model(X)
+        all_y_std.append(y_std.cpu())
+        all_p_std.append(p_std.cpu())
+
+    y_std = torch.cat(all_y_std, dim=0).numpy()
+    p_std = torch.cat(all_p_std, dim=0).numpy()
+
+    y = y_scaler.inverse_transform(y_std)
+    p = y_scaler.inverse_transform(p_std)
+
+    diff = p - y
+    mse  = float(np.mean(diff ** 2))
+    rmse = float(np.sqrt(mse))
+    mae  = float(np.mean(np.abs(diff)))
+    y_mean = float(np.mean(y))
+    ss_res = float(np.sum((y - p) ** 2))
+    ss_tot = float(np.sum((y - y_mean) ** 2))
+    r2 = 1.0 - (ss_res / ss_tot) if ss_tot > 0 else float("nan")
+
+    return {"MSE": mse, "RMSE": rmse, "MAE": mae, "R2": r2}
 
 seed = 42
 torch.manual_seed(seed)
@@ -42,12 +74,19 @@ test_ds  = Dataset(X_test_reduced,  y_test_std)
 
 model = MLP(input_size=X_train_reduced.shape[1])
 
-epochs = 100
+epochs = 200
 batch_size = 32
 lr = 1e-3
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+log_dir = "runs/torch_MLP"
+os.makedirs(log_dir, exist_ok=True)
 
 loss_func = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
+
+writer = SummaryWriter(Path(log_dir))
+global_step = 0
 
 for epoch in range(epochs):
     model.train()
@@ -65,43 +104,21 @@ for epoch in range(epochs):
         optimizer.step()
 
         running += loss.item()
+        
+        writer.add_scalar("train/loss_step", loss.item(), global_step)
+        # writer.add_scalar("train/lr", current_lr(optimizer), global_step) uncomment if lr_scheduler is added
+        global_step += 1
 
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {running/len(train_loader):.4f}")
+
+    epoch_loss = running / max(1, len(train_loader))
+    print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}")
+    
+    writer.add_scalar("train/loss_epoch", epoch_loss, epoch)
+    metrics = evaluate(model, test_ds, y_scaler, batch_size=256, device=device)
+    writer.add_scalars("eval", metrics, epoch)
 
 print("Training complete.")
 
-@torch.no_grad()
-def evaluate(model, test_ds, batch_size=256, device="cpu"):
-    model.eval().to(device)
-    loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, shuffle=False)
-
-    all_y_std = []
-    all_p_std = []
-
-    for X, y_std in loader:
-        X = X.float().to(device)
-        y_std = y_std.float().view(-1, 1).to(device)
-        p_std = model(X)
-
-        all_y_std.append(y_std.cpu())
-        all_p_std.append(p_std.cpu())
-
-    y_std = torch.cat(all_y_std, dim=0).numpy()
-    p_std = torch.cat(all_p_std, dim=0).numpy()
-
-    y = y_scaler.inverse_transform(y_std)
-    p = y_scaler.inverse_transform(p_std)
-
-    diff = p - y
-    mse  = float(np.mean(diff ** 2))
-    rmse = float(np.sqrt(mse))
-    mae  = float(np.mean(np.abs(diff)))
-    y_mean = float(np.mean(y))
-    ss_res = float(np.sum((y - p) ** 2))
-    ss_tot = float(np.sum((y - y_mean) ** 2))
-    r2 = 1.0 - (ss_res / ss_tot if ss_tot > 0 else float("nan"))
-
-    return {"MSE": mse, "RMSE": rmse, "MAE": mae, "R2": r2}
-
-metrics = evaluate(model, test_ds, batch_size=256, device="cpu")
+metrics = evaluate(model, test_ds, y_scaler, batch_size=256, device=device)
 print(metrics)
+writer.flush()
