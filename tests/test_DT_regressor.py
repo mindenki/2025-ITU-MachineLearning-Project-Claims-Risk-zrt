@@ -6,8 +6,8 @@ import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from src.data.load_data import load_data
-from src.data.preprocess_dt import preprocess_dt
-from src.models.dt import DT
+from src.data.preprocess_DT import preprocess_dt
+from src.models.DT_sklearn import DT
 
 
 def evaluate_regression(y_true, y_pred, split_name: str) -> None:
