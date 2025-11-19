@@ -7,7 +7,7 @@ import torch
 
 from sklearn.preprocessing import StandardScaler
 from src.data.load_data import load_data
-from src.data.preprocess import preprocess, PCA
+from src.data.preprocess_MLP import preprocess, PCA
 from src.models.MLP_torch import MLP, Dataset
 
 seed = 42
