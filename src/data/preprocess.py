@@ -13,7 +13,7 @@ from sklearn.decomposition import TruncatedSVD
 
 # Manual Preprocessing
 
-def preprocess_manual(df: pd.DataFrame) -> pd.DataFrame:
+def preprocess_manual(df: pd.DataFrame, exposure: bool = False) -> pd.DataFrame:
     """
     Some basic preprocessing steps applied manually to the dataframe. These are not part of the pipeline and just some basic cleaning steps.
     """
@@ -27,10 +27,12 @@ def preprocess_manual(df: pd.DataFrame) -> pd.DataFrame:
     # Exposure 
     if "Exposure" in df.columns:
         df["Exposure"] = df["Exposure"].clip(lower=0.01)
-    
+        df["Exposure"] = df["Exposure"].clip(upper=1.0)
     
     # Also remove unnecessary columns if present
-    unnecessary_cols = ["IDpol", "ClaimNb", "ClaimRate", "log_ClaimRate", "Area"]
+    unnecessary_cols = ["IDpol", "ClaimNb", "ClaimRate", "log_ClaimRate", "Area", "Exposure"]
+    if exposure:
+        unnecessary_cols.remove("Exposure")
     for col in unnecessary_cols:
         if col in df.columns:
             df = df.drop(columns=[col])
@@ -68,33 +70,41 @@ FEATURES= [
 
 # Custom Transformers
 
+class Binner:
+    def __init__(self, bins):
+        self.bins = bins
 
-def make_log_transformer() -> FunctionTransformer:
-    def log_transformer(X):
-        return np.log1p(X)
-    return FunctionTransformer(log_transformer, feature_names_out="one-to-one")
+    def __call__(self, X):
+        X = pd.DataFrame(X)
+        out = X.apply(lambda col: pd.cut(col, bins=self.bins, labels=False))
+        return out.values
 
 def make_binner(bins: list) -> FunctionTransformer:
-    def binner(X):
-        X = pd.DataFrame(X)
-        out = X.apply(lambda col: pd.cut(col, bins= bins, labels= False))
-        return out.values
-    return FunctionTransformer(binner, feature_names_out="one-to-one")
+    return FunctionTransformer(Binner(bins), feature_names_out="one-to-one")
 
-def make_capper(cap: float = .99) -> FunctionTransformer:
-    def capper(X):
-        X = np.asarray(X)
-        upper_cap = np.quantile(X, cap, axis=0)
-        return np.minimum(X, upper_cap)
-    return FunctionTransformer(capper, feature_names_out="one-to-one")
 
-def make_ratio_transformer():
-    def ratio(X):
-        return X[:, 0] / X[:, 1].reshape(-1, 1)
-    def ratio_name(transformer, feature_names_in):
-        return ["ratio"]
+class LogTransform:
+    def __call__(self, X):
+        return np.log1p(X)
+
+def make_log_transformer():
+    return FunctionTransformer(LogTransform(), feature_names_out="one-to-one")
+
+
+# def make_capper(cap: float = .99) -> FunctionTransformer:
+#     def capper(X):
+#         X = np.asarray(X)
+#         upper_cap = np.quantile(X, cap, axis=0)
+#         return np.minimum(X, upper_cap)
+#     return FunctionTransformer(capper, feature_names_out="one-to-one")
+
+# def make_ratio_transformer():
+#     def ratio(X):
+#         return X[:, 0] / X[:, 1].reshape(-1, 1)
+#     def ratio_name(transformer, feature_names_in):
+#         return ["ratio"]
     
-    return FunctionTransformer(ratio, feature_names_out=ratio_name)
+#     return FunctionTransformer(ratio, feature_names_out=ratio_name)
 
 
 # Definition of reusable pipeline components
@@ -170,14 +180,16 @@ def create_target(df: pd.DataFrame, target: TargetType, claimnbcol: str = "Claim
     if target not in TargetType.__args__:
         raise ValueError(f"{target} type has not been implemented. Must be one of {TargetType.__args__}")
     
+    exposure = df[exposurecol].clip(upper=1.0)
+    
     if target == "ClaimNb": 
         target_series = df[claimnbcol]
         default_new_col_name = "ClaimNb"
     elif target == "ClaimRate":
-        target_series = df[claimnbcol] / df[exposurecol]
+        target_series = df[claimnbcol] / exposure
         default_new_col_name = "ClaimRate"
     elif target == "log_ClaimRate":
-        target_series = np.log(df[claimnbcol] / df[exposurecol].clip(lower=exposure_floor) + 1)
+        target_series = np.log(df[claimnbcol] / exposure.clip(lower=exposure_floor) + 1)
         default_new_col_name = "log_ClaimRate"
         
     # more target types can be added here in the future if needed
@@ -191,11 +203,6 @@ def create_target(df: pd.DataFrame, target: TargetType, claimnbcol: str = "Claim
         
     return target_series
 
-
-
-
-def PCA(n_components: int, seed: int = 42) -> TruncatedSVD:
-    return TruncatedSVD(n_components=n_components, algorithm="randomized", n_iter=7, random_state=seed)
 
 if __name__ == "__main__":
     pass
