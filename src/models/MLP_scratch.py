@@ -56,8 +56,7 @@ class Layer:
         self.db.fill(0.0)
     
 class MLP:
-    def __init__(self, input_dim, hidden_sizes, lr):
-        self.lr = lr
+    def __init__(self, input_dim, hidden_sizes):
         output_dim = 1
         sizes = [input_dim] + list(hidden_sizes) + [output_dim]
         activations = [(ReLU, dReLU)] * len(hidden_sizes) + [(lambda x:x, lambda x:np.ones_like(x))]
