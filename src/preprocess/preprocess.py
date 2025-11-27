@@ -76,11 +76,25 @@ class Binner:
 
     def __call__(self, X):
         X = pd.DataFrame(X)
-        out = X.apply(lambda col: pd.cut(col, bins=self.bins, labels=False))
-        return out.values
+        
+        # clip values to bin range (avoid NaN)
+        X = X.clip(lower=self.bins[0], upper=self.bins[-1])
+        
+        # bin 
+        out = X.apply(lambda col: pd.cut(
+            col,
+            bins=self.bins,
+            labels=False,
+            include_lowest=True
+        ))
+        
+        return out.astype("float32").values
 
-def make_binner(bins: list) -> FunctionTransformer:
-    return FunctionTransformer(Binner(bins), feature_names_out="one-to-one")
+def make_binner(bins: list):
+    return FunctionTransformer(
+        Binner(bins),
+        feature_names_out="one-to-one"
+    )
 
 
 class LogTransform:
