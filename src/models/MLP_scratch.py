@@ -1,5 +1,6 @@
 from math import sqrt
 import numpy as np
+from ..utils.batch_iterator import batch_iterator
 
 def ReLU(x):
     return np.maximum(0, x)
@@ -78,36 +79,3 @@ class MLP:
     def zero_grad(self):
         for layer in self.layers:
             layer.zero_grad()
-            
-    def step(self):
-        for layer in self.layers:
-            layer.step(self.lr)
-        
-        
-def MSE(preds, targets):
-    diff = preds - targets
-    loss = (diff **2).mean()
-    grad = (2.0 * diff) / preds.shape[0]
-    return loss, grad
-
-# Example of one pass
-# model = MLP(...)
-# preds = model.forward(X)
-# loss, dyp = MSE(preds, y)
-# model.zero_grad()
-# model.backward(dyp)
-# model.step()
-
-
-def batch_iterator(X, y, batch_size, shuffle=True, seed=42):
-    N = X.shape[0]
-    idx = np.arange(N)
-    rng = np.random.default_rng(seed) if shuffle else None
-    if shuffle:
-        rng.shuffle(idx)
-    for start in range(0, N, batch_size):
-        end = start + batch_size
-        b = idx[start:end]
-        Xb = X[b]
-        yb = y[b].reshape(-1, 1)
-        yield Xb, yb
