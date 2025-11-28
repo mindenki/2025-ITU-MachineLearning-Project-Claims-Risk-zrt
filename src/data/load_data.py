@@ -60,6 +60,9 @@ def load_data(raw: bool=True, target: str=None) -> tuple[pd.DataFrame, pd.DataFr
         y_train = np.load(y_train_path)
         y_test = np.load(y_test_path)
         
+        X_train = X_train.toarray()
+        X_test = X_test.toarray()
+        
         return (X_train, y_train), (X_test, y_test)
         
     

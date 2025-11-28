@@ -57,7 +57,7 @@ class Adam:
                     "mB": np.zeros_like(layer.b),
                     "vB": np.zeros_like(layer.b),
                 }
-            st = self.state
+            st = self.state[key]
             
             gW = layer.dW
             gB = layer.db
