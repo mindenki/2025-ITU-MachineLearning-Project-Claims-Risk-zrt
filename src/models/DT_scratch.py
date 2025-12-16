@@ -1,38 +1,20 @@
 import numpy as np
 
 
-def giniimp_calc(classes):
-    unique, counts = np.unique(classes, return_counts=True)
-    probabilities = counts / len(classes)
-    gini = 1 - np.sum(probabilities ** 2)
-    return gini
-
-
-def weighted_impurity(left_node, right_node, def_used):
-    
-    n_left = len(left_node)
-    n_right = len(right_node)
-    n_total = n_left + n_right
-
-    weighted = (n_left / n_total) * def_used(left_node) + (n_right / n_total) * def_used(right_node)
-    return weighted
-
-
-
 # class to store info about the tree nodes
 class flor_de_liz:
-    def __init__(self, feature=None, threshold=None, left=None, right=None, value=None):
+    def __init__(self, feature=None, threshold=None, left=None, right=None, values=None):
         self.feature = feature
         self.threshold = threshold
         self.left = left
         self.right = right
-        self.value = value
+        self.values = values
         pass
 
 
     # checks if it is a leaf node     
     def check(self):
-        return self.value is not None
+        return self.values is not None
 
 
 
@@ -45,13 +27,29 @@ class Decision_tree:
         pass
 
 
+    def giniimp_calc(self, classes):
+        unique, counts = np.unique(classes, return_counts=True)
+        probabilities = counts / len(classes)
+        gini = 1 - np.sum(probabilities ** 2)
+        return gini
+
+
+    def weighted_impurity(self, left_node, right_node, def_used):
+        n_left = len(left_node)
+        n_right = len(right_node)
+        n_total = n_left + n_right
+
+        weighted = (n_left / n_total) * def_used(left_node) + (n_right / n_total) * def_used(right_node)
+        return weighted
+
+
     def best_split(self, features, values):
         
         n_samples, n_features = features.shape
 
         best_feature_indx = None
-        best_thresh = None
-        best_imp = float('inf')
+        best_threshold = None
+        best_impurity = float('inf')
 
         # try every feature  
         for feat_ixdx in range(n_features):
@@ -72,14 +70,14 @@ class Decision_tree:
                 left_y = values[left_ixdx]
                 right_y = values[right_ixdx]
 
-                impurity = weighted_impurity(left_y, right_y)
+                impurity = self.weighted_impurity(left_y, right_y, self.giniimp_calc)
 
                 if impurity < best_impurity:
                     best_impurity = impurity
-                    best_feature = feat_ixdx
+                    best_feature_indx = feat_ixdx
                     best_threshold = threshold
 
-        return best_feature_indx, best_thresh
+        return best_feature_indx, best_threshold
 
 
 
@@ -121,7 +119,7 @@ class Decision_tree:
                 f"Shape mismatch: X has {features.shape[0]} samples, y has {values.shape[0]}"
             )
 
-        self.root = self._grow_tree(features, values, depth=0)
+        self.root = self.tree_maker(features, values, depth=0)
         return self
 
 
@@ -138,16 +136,16 @@ class Decision_tree:
             # or the minimum sample  
 
             # if any of the parameters are not met, we predict the most likely value for the sample
-            leaf_value = self.most_common_label(values)
-            return flor_de_liz(value=leaf_value)
+            leaf_values = self.most_common_label(values)
+            return flor_de_liz(values=leaf_values)
         
         # best split for the sample
         best_feature, best_threshold = self.best_split(features, values)
 
         # in case no better split is found, create leaf node
         if best_feature is None:
-            leaf_value = self.most_common_label(values)
-            return flor_de_liz(values=leaf_value)
+            leaf_values = self.most_common_label(values)
+            return flor_de_liz(values=leaf_values)
         
         # split the dataset
         left_indx = features[:, best_feature] <= best_threshold
