@@ -1,6 +1,24 @@
 from math import sqrt
 import numpy as np
 from ..utils.batch_iterator import batch_iterator
+from ..utils.optimiziers import SGD, SGDMomentum, Adam, Adagrad
+from ..utils.losses import MSE, MAE, Huber, LogCosh
+
+
+OPTIMIZERS = {
+    "sgd": lambda: SGD(lr=1e-3),
+    "sgd_momentum": lambda: SGDMomentum(lr=1e-3, momentum=0.9),
+    "adam": lambda: Adam(lr=1e-3),
+    "adagrad": lambda: Adagrad(lr=1e-2)
+}
+
+LOSSES = {
+    "mse": MSE,
+    "mae": MAE,
+    "huber": Huber,
+    "logcosh": LogCosh
+}
+
 
 def ReLU(x):
     return np.maximum(0, x)
@@ -82,11 +100,11 @@ class MLP:
 class Trainer:
     def __init__(
         self,
-        model,
         input_dim,
         hidden_sizes,
         optimizer,
         loss_fn,
+        model=MLP,
         batch_size=32,
         epochs=100,
         shuffle=True,
@@ -105,6 +123,10 @@ class Trainer:
         y = y.reshape(-1, 1)
         history = {"train_loss": [], "val_loss": []}
 
+        if isinstance(self.optimizer, str):
+            self.optimizer = OPTIMIZERS[self.optimizer]()
+        if isinstance(self.loss_fn, str):
+            self.loss_fn = LOSSES[self.loss_fn]
         for epoch in range(1, self.epochs + 1):
             epoch_loss = 0.0
             n_batches = 0
