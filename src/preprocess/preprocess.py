@@ -186,7 +186,7 @@ def build_feature_pipeline(feature_configs: List[FeatureConfig] = FEATURES) -> C
 
 # Target creation
 
-TargetType = Literal["ClaimNb", "ClaimRate", "log_ClaimRate"]
+TargetType = Literal["ClaimNb", "ClaimRate", "log_ClaimRate","BinaryClaim"]
 
 def create_target(df: pd.DataFrame, target: TargetType, claimnbcol: str = "ClaimNb",
                   exposurecol: str = "Exposure", exposure_floor: float = 0.01,
@@ -205,6 +205,9 @@ def create_target(df: pd.DataFrame, target: TargetType, claimnbcol: str = "Claim
     elif target == "log_ClaimRate":
         target_series = np.log(df[claimnbcol] / exposure.clip(lower=exposure_floor) + 1)
         default_new_col_name = "log_ClaimRate"
+    elif target == "BinaryClaim":
+        target_series = (df[claimnbcol] > 0).astype(int)
+        default_new_col_name = "BinaryClaim"
         
     # more target types can be added here in the future if needed
     
