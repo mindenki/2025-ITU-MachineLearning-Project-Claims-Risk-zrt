@@ -16,16 +16,14 @@ def Huber(preds, targets, delta=1.0):
     diff = preds - targets
     abs_diff = np.abs(diff)
 
-    quad = abs_diff < delta
-    linear = ~quad
-
-    loss = (
-        0.5 * (diff[quad] ** 2).mean()
-        + delta * (abs_diff[linear] - 0.5 * delta).mean()
-    )
+    loss = np.where(
+        abs_diff <= delta,
+        0.5 * diff**2,
+        delta * (abs_diff - 0.5 * delta)
+    ).mean()
 
     grad = np.where(
-        abs_diff < delta,
+        abs_diff <= delta,
         diff,
         delta * np.sign(diff)
     ) / preds.shape[0]
