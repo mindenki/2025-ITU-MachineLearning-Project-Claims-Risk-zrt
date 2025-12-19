@@ -26,7 +26,8 @@ class MLP(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_sizes[0], hidden_sizes[1]),
             nn.ReLU(),
-            nn.Linear(hidden_sizes[1], 1)
+            nn.Linear(hidden_sizes[1], 1),
+            nn.Softplus()
         )
     def forward(self, x):
         return self.layers(x)

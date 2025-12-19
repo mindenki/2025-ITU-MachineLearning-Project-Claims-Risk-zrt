@@ -6,11 +6,12 @@ from ..utils.losses import MSE, MAE, Huber, LogCosh
 
 
 OPTIMIZERS = {
-    "sgd": lambda: SGD(lr=1e-3),
-    "sgd_momentum": lambda: SGDMomentum(lr=1e-3, momentum=0.9),
-    "adam": lambda: Adam(lr=1e-3),
-    "adagrad": lambda: Adagrad(lr=1e-2)
+    "sgd": SGD,
+    "sgd_momentum": SGDMomentum,
+    "adam": Adam,
+    "adagrad": Adagrad,
 }
+
 
 LOSSES = {
     "mse": MSE,
@@ -25,6 +26,13 @@ def ReLU(x):
 
 def dReLU(x):
     return (x>0.0).astype(x.dtype)
+
+def identity(x):
+    return x
+
+def didentity(x):
+    return np.ones_like(x)
+
     
 class Layer:
     def __init__(self, in_feats, out_feats, activation, dactivation):
@@ -77,7 +85,8 @@ class MLP:
     def __init__(self, input_dim, hidden_sizes):
         output_dim = 1
         sizes = [input_dim] + list(hidden_sizes) + [output_dim]
-        activations = [(ReLU, dReLU)] * len(hidden_sizes) + [(lambda x:x, lambda x:np.ones_like(x))]
+        activations = [(ReLU, dReLU)] * len(hidden_sizes) + [(identity, didentity)]
+
         self.layers = []
         for i in range(len(sizes) - 1):
             self.layers.append(Layer(sizes[i], sizes[i+1], activations[i][0], activations[i][1]))
@@ -124,21 +133,29 @@ class Trainer:
         history = {"train_loss": [], "val_loss": []}
 
         if isinstance(self.optimizer, str):
-            self.optimizer = OPTIMIZERS[self.optimizer]()
+            optimizer = OPTIMIZERS[self.optimizer]()
+        else:
+            optimizer = self.optimizer
+
         if isinstance(self.loss_fn, str):
-            self.loss_fn = LOSSES[self.loss_fn]
+            loss_fn = LOSSES[self.loss_fn]
+        else:
+            loss_fn = self.loss_fn
+
         for epoch in range(1, self.epochs + 1):
             epoch_loss = 0.0
             n_batches = 0
 
-            for Xb, yb in batch_iterator(X, y, batch_size=self.batch_size, shuffle=self.shuffle):
+            for Xb, yb in batch_iterator(
+                X, y, batch_size=self.batch_size, shuffle=self.shuffle
+            ):
                 preds = self.model_.forward(Xb)
-                
-                loss, grad = self.loss_fn(preds, yb)
+
+                loss, grad = loss_fn(preds, yb)
 
                 self.model_.zero_grad()
                 self.model_.backward(grad)
-                self.optimizer.step(self.model_)
+                optimizer.step(self.model_)
 
                 epoch_loss += loss
                 n_batches += 1
@@ -149,14 +166,18 @@ class Trainer:
             if X_val is not None and y_val is not None:
                 yv = y_val.reshape(-1, 1)
                 val_preds = self.model_.forward(X_val)
-                val_loss, _ = self.loss_fn(val_preds, yv)
+                val_loss, _ = loss_fn(val_preds, yv)
                 history["val_loss"].append(val_loss)
             else:
                 history["val_loss"].append(None)
 
             if verbose:
                 if X_val is not None and y_val is not None:
-                    print(f"Epoch {epoch:3d} | train_loss={epoch_loss:.6f} | val_loss={val_loss:.6f}")
+                    print(
+                        f"Epoch {epoch:3d} | "
+                        f"train_loss={epoch_loss:.6f} | "
+                        f"val_loss={val_loss:.6f}"
+                    )
                 else:
                     print(f"Epoch {epoch:3d} | train_loss={epoch_loss:.6f}")
 
