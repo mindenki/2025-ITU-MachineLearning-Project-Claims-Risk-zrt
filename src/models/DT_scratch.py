@@ -25,6 +25,19 @@ class Decision_tree:
         self.min_samples_split = min_samples_split
         self.root = None
         pass
+    
+    def get_params(self, deep=True):
+        return {
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split
+        }
+        
+    def set_params(self, **params):
+        for key, value in params.items():
+            if not hasattr(self, key):
+                raise ValueError(f"Invalid parameter '{key}' for Decision_tree.")
+            setattr(self, key, value)
+        return self
 
 
     def giniimp_calc(self, classes):

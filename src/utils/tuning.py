@@ -14,6 +14,7 @@ def run_random_search(pipeline, param_dist, X, y, n_iter=25, scoring="neg_root_m
         n_jobs=n_jobs,
         random_state=42,
         return_train_score=True,
+        refit=True
     )
     search.fit(X, y)
     
