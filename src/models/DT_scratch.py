@@ -39,58 +39,83 @@ class Decision_tree:
             setattr(self, key, value)
         return self
 
-
-    def giniimp_calc(self, classes):
-        unique, counts = np.unique(classes, return_counts=True)
-        probabilities = counts / len(classes)
-        gini = 1 - np.sum(probabilities ** 2)
-        return gini
+    def giniimp_calc(self, y):
+        _, counts = np.unique(y, return_counts=True)
+        probs = counts / len(y)
+        return 1 - np.sum(probs ** 2)
 
 
-    def weighted_impurity(self, left_node, right_node, def_used):
+    def weighted_impurity(self, left_node, right_node):
         n_left = len(left_node)
         n_right = len(right_node)
         n_total = n_left + n_right
 
-        weighted = (n_left / n_total) * def_used(left_node) + (n_right / n_total) * def_used(right_node)
+        weighted = (n_left / n_total) * self.giniimp_calc(left_node) + (n_right / n_total) * self.giniimp_calc(right_node)
         return weighted
 
 
-    def best_split(self, features, values):
-        
-        n_samples, n_features = features.shape
+    def best_split(self, row_indices):
+        X, y = self.X[row_indices], self.y[row_indices]
+        n_samples, n_features = X.shape
 
-        best_feature_indx = None
-        best_threshold = None
         best_impurity = float('inf')
+        best_feature = None
+        best_threshold = None
 
-        # try every feature  
-        for feat_ixdx in range(n_features):
-            # get all unique values of the feature sorted
-            feature_column = features[:, feat_ixdx]
-            thresholds = np.unique(feature_column)
+        for f in range(n_features):
+            feature_vals = X[:, f]
+            sorted_idx = np.argsort(feature_vals)
+            sorted_vals = feature_vals[sorted_idx]
+            sorted_y = y[sorted_idx]
 
-            # try every split between the sorted values
-            for i in range(len(thresholds) - 1):
-                threshold = (thresholds[i] + thresholds[i + 1]) / 2
-
-                left_ixdx = feature_column <= threshold
-                right_ixdx = feature_column > threshold
-
-                if left_ixdx.sum() == 0 or right_ixdx.sum() == 0:
+            for i in range(1, n_samples):
+                if sorted_vals[i] == sorted_vals[i-1]:
                     continue
 
-                left_y = values[left_ixdx]
-                right_y = values[right_ixdx]
-
-                impurity = self.weighted_impurity(left_y, right_y, self.giniimp_calc)
+                threshold = (sorted_vals[i] + sorted_vals[i-1]) / 2
+                left_y = sorted_y[:i]
+                right_y = sorted_y[i:]
+                impurity = self.weighted_impurity(left_y, right_y)
 
                 if impurity < best_impurity:
                     best_impurity = impurity
-                    best_feature_indx = feat_ixdx
+                    best_feature = f
                     best_threshold = threshold
 
-        return best_feature_indx, best_threshold
+        return best_feature, best_threshold
+        # n_samples, n_features = features.shape
+
+        # best_feature_indx = None
+        # best_threshold = None
+        # best_impurity = float('inf')
+
+        # # try every feature  
+        # for feat_ixdx in range(n_features):
+        #     # get all unique values of the feature sorted
+        #     feature_column = features[:, feat_ixdx]
+        #     thresholds = np.unique(feature_column)
+
+        #     # try every split between the sorted values
+        #     for i in range(len(thresholds) - 1):
+        #         threshold = (thresholds[i] + thresholds[i + 1]) / 2
+
+        #         left_ixdx = feature_column <= threshold
+        #         right_ixdx = feature_column > threshold
+
+        #         if left_ixdx.sum() == 0 or right_ixdx.sum() == 0:
+        #             continue
+
+        #         left_y = values[left_ixdx]
+        #         right_y = values[right_ixdx]
+
+        #         impurity = self.weighted_impurity(left_y, right_y, self.giniimp_calc)
+
+        #         if impurity < best_impurity:
+        #             best_impurity = impurity
+        #             best_feature_indx = feat_ixdx
+        #             best_threshold = threshold
+
+        # return best_feature_indx, best_threshold
 
 
 
@@ -122,59 +147,85 @@ class Decision_tree:
 
 
     # the root node of the tree
-    def fit(self, features, values):
-        # Auto-fix transposed input
-        if features.shape[0] != values.shape[0] and features.shape[1] == values.shape[0]:
-            features = features.T
+    def fit(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y)
 
-        if features.shape[0] != values.shape[0]:
-            raise ValueError(
-                f"Shape mismatch: X has {features.shape[0]} samples, y has {values.shape[0]}"
-            )
+        if X.ndim != 2:
+            raise ValueError(f"Expected 2D X, got {X.ndim}D")
 
-        self.root = self.tree_maker(features, values, depth=0)
+        if X.shape[0] != y.shape[0] and X.shape[1] == y.shape[0]:
+            X = X.T
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("Shape mismatch")
+
+        self.root = None
+        self.X = X
+        self.y = y
+        self.n_features = X.shape[1]
+
+        self.root = self.tree_maker(np.arange(X.shape[0]), depth=0)
         return self
 
 
-    def tree_maker(self, features, values, depth):
+    def tree_maker(self, row_indices, depth):
+        X, y = self.X[row_indices], self.y[row_indices]
+        n_samples = len(row_indices)
+        n_classes = len(np.unique(y))
 
-        n_samples = features.shape[0]
-        n_classes = len(np.unique(values))
-        
-        # check if everything is within the tree parameters
         if (self.max_depth is not None and depth >= self.max_depth) or n_classes == 1 or n_samples < self.min_samples_split:
+            return flor_de_liz(values=self.most_common_label(y))
 
-            # in this case creates a leaf node because the tree goes over the depth limit if the function continues 
-            # or because the node already only has class within it
-            # or the minimum sample  
-
-            # if any of the parameters are not met, we predict the most likely value for the sample
-            leaf_values = self.most_common_label(values)
-            return flor_de_liz(values=leaf_values)
-        
-        # best split for the sample
-        best_feature, best_threshold = self.best_split(features, values)
-
-        # in case no better split is found, create leaf node
+        best_feature, best_threshold = self.best_split(row_indices)
         if best_feature is None:
-            leaf_values = self.most_common_label(values)
-            return flor_de_liz(values=leaf_values)
-        
-        # split the dataset
-        left_indx = features[:, best_feature] <= best_threshold
-        right_indx = features[:, best_feature] > best_threshold
+            return flor_de_liz(values=self.most_common_label(y))
 
-        left_features = features[left_indx]
-        right_features = features[right_indx]
-        left_values = values[left_indx]
-        right_values = values[right_indx]
+        left_idx = row_indices[self.X[row_indices, best_feature] <= best_threshold]
+        right_idx = row_indices[self.X[row_indices, best_feature] > best_threshold]
 
-        # from the split creates 
-        left_node = self.tree_maker(left_features, left_values, depth + 1)
-        right_node = self.tree_maker(right_features, right_values, depth + 1)
+        left_node = self.tree_maker(left_idx, depth + 1)
+        right_node = self.tree_maker(right_idx, depth + 1)
+
+        return flor_de_liz(feature=best_feature, threshold=best_threshold, left=left_node, right=right_node)
+
+        # n_samples = features.shape[0]
+        # n_classes = len(np.unique(values))
         
-        return flor_de_liz(feature=best_feature, 
-                           threshold=best_threshold, 
-                           left=left_node, 
-                           right=right_node
-        )
+        # # check if everything is within the tree parameters
+        # if (self.max_depth is not None and depth >= self.max_depth) or n_classes == 1 or n_samples < self.min_samples_split:
+
+        #     # in this case creates a leaf node because the tree goes over the depth limit if the function continues 
+        #     # or because the node already only has class within it
+        #     # or the minimum sample  
+
+        #     # if any of the parameters are not met, we predict the most likely value for the sample
+        #     leaf_values = self.most_common_label(values)
+        #     return flor_de_liz(values=leaf_values)
+        
+        # # best split for the sample
+        # best_feature, best_threshold = self.best_split(features, values)
+
+        # # in case no better split is found, create leaf node
+        # if best_feature is None:
+        #     leaf_values = self.most_common_label(values)
+        #     return flor_de_liz(values=leaf_values)
+        
+        # # split the dataset
+        # left_indx = features[:, best_feature] <= best_threshold
+        # right_indx = features[:, best_feature] > best_threshold
+
+        # left_features = features[left_indx]
+        # right_features = features[right_indx]
+        # left_values = values[left_indx]
+        # right_values = values[right_indx]
+
+        # # from the split creates 
+        # left_node = self.tree_maker(left_features, left_values, depth + 1)
+        # right_node = self.tree_maker(right_features, right_values, depth + 1)
+        
+        # return flor_de_liz(feature=best_feature, 
+        #                    threshold=best_threshold, 
+        #                    left=left_node, 
+        #                    right=right_node
+        # )
