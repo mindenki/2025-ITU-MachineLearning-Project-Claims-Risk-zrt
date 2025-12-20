@@ -1,16 +1,16 @@
 import torch
 import torch.nn as nn
 import numpy as np
-
+from torch.utils.data import DataLoader
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, X, y):
         
-        if not torch.is_tensor(X) and not torch.is_tensor(y):
-            X = getattr(X, "to_numpy", lambda: X)()
-            self.X = torch.as_tensor(X, dtype=torch.float32)
-            y = getattr(y, "to_numpy", lambda: y)()
-            self.y = torch.as_tensor(y, dtype=torch.float32)
+        X = getattr(X, "to_numpy", lambda: X)()
+        y = getattr(y, "to_numpy", lambda: y)()
+
+        self.X = torch.as_tensor(X, dtype=torch.float32)
+        self.y = torch.as_tensor(y, dtype=torch.float32)
 
     def __len__(self):
         return len(self.X)
@@ -31,13 +31,19 @@ class MLP(nn.Module):
         )
     def forward(self, x):
         return self.layers(x)
+
+def train_model(
+    model,
+    X_train,
+    y_train,
+    X_val,
+    y_val,
+    lr=1e-3,
+    batch_size=256,
+    epochs=50,
+    return_epoch_history=False
+):
     
-
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-
-def train_model(model, X_train, y_train, X_val, y_val, lr=1e-3, batch_size=256, epochs=50, return_epoch_history=False):
     # Dataset and DataLoader
     train_dataset = Dataset(X_train, y_train)
     if X_val is not None and y_val is not None:
@@ -97,9 +103,9 @@ def train_model(model, X_train, y_train, X_val, y_val, lr=1e-3, batch_size=256, 
         else:
             val_loss = None
             val_rmse_epoch = None
-        if return_epoch_history:
-            return model, train_rmse_list, val_rmse_list
-        else:   
-            return model, train_rmse_list[-1], val_rmse_list[-1] if val_rmse_list else None
+    if return_epoch_history:
+        return model, train_rmse_list, val_rmse_list
+    else:   
+        return model, train_rmse_list[-1], val_rmse_list[-1] if val_rmse_list else None
     
 
