@@ -8,9 +8,6 @@ from sklearn.model_selection import LearningCurveDisplay
 
 
 def residual_plot(y_true, y_pred, gridsize=50, name=""):
-    """
-    Residuals plot showing point density using hexbin coloring.
-    """
     sns.set(style="whitegrid")
     residuals = y_true - y_pred
     
@@ -45,19 +42,12 @@ def residual_plot(y_true, y_pred, gridsize=50, name=""):
 
 
 def parity_plot(y_true, y_pred, jitter=0.0, circle_size=80, name=""):
-    """
-    Fast parity plot (True vs Predicted) with modern aesthetics.
-    """
+
     
     sns.set(style="whitegrid")
     
-    # Add optional jitter
-    if jitter > 0:
-        y_true_plot = y_true + np.random.normal(0, jitter, size=len(y_true))
-        y_pred_plot = y_pred + np.random.normal(0, jitter, size=len(y_pred))
-    else:
-        y_true_plot = y_true
-        y_pred_plot = y_pred
+    y_true_plot = y_true
+    y_pred_plot = y_pred
 
     plt.figure(figsize=(10,6))
 
@@ -76,10 +66,6 @@ def parity_plot(y_true, y_pred, jitter=0.0, circle_size=80, name=""):
     max_val = max(max(y_true), max(y_pred))
     plt.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', linewidth=1.5)
 
-    # linear trend line
-    # m, b = np.polyfit(y_true, y_pred, 1)
-    # plt.plot([min_val, max_val], [m*min_val + b, m*max_val + b], color='orange', linestyle='-', linewidth=1.5, label='Trend')
-
     plt.xlabel('True Values', fontsize=12)
     plt.ylabel('Predicted Values', fontsize=12)
     plt.title(f'Parity Plot: True vs Predicted Values: {name}', fontsize=14)
@@ -88,10 +74,6 @@ def parity_plot(y_true, y_pred, jitter=0.0, circle_size=80, name=""):
     plt.show()
     
 def prediction_distribution(y_true, y_pred, bins=50, name=""):
-    """
-    Modern Seaborn-style plot for the distribution of true vs predicted values.
-
-    """
     sns.set(style="whitegrid")  
 
     plt.figure(figsize=(10,6))
@@ -113,9 +95,6 @@ def prediction_distribution(y_true, y_pred, bins=50, name=""):
     plt.show()
     
 def prediction_distribution_violin(y_true, y_pred, name=""):
-    """
-    Violin plot comparing true vs predicted value distributions.
-    """
     import pandas as pd
 
     df = pd.DataFrame({
@@ -145,7 +124,7 @@ def plot_learning_curve(model, X, y, cv=None, scoring="neg_mean_absolute_error",
     train_scores = -train_scores
     val_scores = -val_scores
 
-    # Calculate mean and std
+    # clculate mean and std
     train_mean = np.mean(train_scores, axis=1)
     train_std = np.std(train_scores, axis=1)
     val_mean = np.mean(val_scores, axis=1)
@@ -153,15 +132,15 @@ def plot_learning_curve(model, X, y, cv=None, scoring="neg_mean_absolute_error",
 
     plt.figure(figsize=(10,6))
 
-    # Modern colors
-    color_train = '#1f77b4'   # blue
-    color_val = '#ff7f0e'     # orange
 
-    # Plot train score with shaded std
+    color_train = "blue"   
+    color_val = "orange"     
+
+    # Plot train score with shadedd std
     plt.plot(train_sizes, train_mean, color=color_train, label="Train Score", marker='o')
     plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, color=color_train, alpha=0.2)
 
-    # Plot validation score with shaded std
+    # Plot validation score with shaded sdt
     plt.plot(train_sizes, val_mean, color=color_val, label="Validation Score", marker='o')
     plt.fill_between(train_sizes, val_mean - val_std, val_mean + val_std, color=color_val, alpha=0.2)
 
@@ -186,37 +165,3 @@ def tail_residuals_plot(y_true, y_pred, name):
         plt.xlabel('Residuals')
         plt.show()
         
-def plot_epoch_rmse(all_fold_train_rmse, all_fold_val_rmse, title="MLP Training Curve"):
-    """
-    Plots RMSE vs Epochs for training and validation sets.
-    """
-    # Flatten over iterations/folds
-    train_arrays = []
-    val_arrays = []
-
-    for iter_folds_train, iter_folds_val in zip(all_fold_train_rmse, all_fold_val_rmse):
-        train_arrays.extend(iter_folds_train)
-        val_arrays.extend(iter_folds_val)
-
-    train_arrays = np.array(train_arrays)  # shape: (n_folds*n_iter, epochs)
-    val_arrays = np.array(val_arrays)
-
-    train_mean = train_arrays.mean(axis=0)
-    train_std = train_arrays.std(axis=0)
-    val_mean = val_arrays.mean(axis=0)
-    val_std = val_arrays.std(axis=0)
-
-    epochs = np.arange(1, train_mean.size + 1)
-
-    plt.figure(figsize=(10,6))
-    plt.plot(epochs, train_mean, color='#1f77b4', label="Train RMSE", marker='o')
-    plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, color='#1f77b4', alpha=0.2)
-    plt.plot(epochs, val_mean, color='#ff7f0e', label="Validation RMSE", marker='o')
-    plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, color='#ff7f0e', alpha=0.2)
-
-    plt.xlabel("Epoch", fontsize=12)
-    plt.ylabel("RMSE", fontsize=12)
-    plt.title(title, fontsize=14)
-    plt.grid(True, linestyle='--', alpha=0.3)
-    plt.legend()
-    plt.show()
